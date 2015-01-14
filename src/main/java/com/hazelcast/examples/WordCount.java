@@ -22,9 +22,8 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ICompletableFuture;
 import com.hazelcast.core.IMap;
-import com.hazelcast.examples.tutorials.impl.ToStringPrettyfier;
+import com.hazelcast.examples.tutorials.impl.Utils;
 import com.hazelcast.examples.wordcount.TokenizerMapper;
-import com.hazelcast.examples.wordcount.WordcountCombinerFactory;
 import com.hazelcast.examples.wordcount.WordcountReducerFactory;
 import com.hazelcast.mapreduce.Job;
 import com.hazelcast.mapreduce.JobTracker;
@@ -68,7 +67,7 @@ public class WordCount {
 
 
 
-            System.out.println(ToStringPrettyfier.toString(future.get()));
+            System.out.println(Utils.toString(future.get()));
 
         } finally {
             // Shutdown cluster

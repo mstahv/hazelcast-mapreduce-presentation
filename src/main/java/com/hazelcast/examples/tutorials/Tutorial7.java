@@ -16,25 +16,36 @@
 
 package com.hazelcast.examples.tutorials;
 
-import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
+import com.hazelcast.examples.HazelcastService;
 import com.hazelcast.examples.Tutorial;
 import com.hazelcast.examples.model.SalaryYear;
 import com.hazelcast.mapreduce.aggregation.Aggregations;
 import com.hazelcast.mapreduce.aggregation.Supplier;
+import com.vaadin.cdi.CDIView;
+import com.vaadin.ui.Component;
+import org.vaadin.viritin.label.Header;
 
-public class Tutorial7
-        implements Tutorial {
+import javax.inject.Inject;
+
+@CDIView
+public class Tutorial7 extends Tutorial {
+    
+    @Inject
+    HazelcastService s;
 
     @Override
-    public void execute(HazelcastInstance hazelcastInstance)
-            throws Exception {
-
-        IMap<String, SalaryYear> map = hazelcastInstance.getMap("salaries");
+    public Component execute() throws Exception {
+        IMap<String, SalaryYear> map = s.getHazelcastInstance().getMap("salaries");
         Supplier<String, SalaryYear, Integer> supplier =
                 Supplier.all((entry) -> entry.getAnnualSalary());
 
         int sum = map.aggregate(supplier, Aggregations.integerSum());
-        System.out.println("Salary sum: " + sum);
+        return new Header("Salary sum: " + sum);
+    }
+
+    @Override
+    public String getShortDescription() {
+        return "Salary sum";
     }
 }

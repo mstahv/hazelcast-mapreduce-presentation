@@ -19,31 +19,38 @@ package com.hazelcast.examples.tutorials;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ICompletableFuture;
 import com.hazelcast.core.IList;
+import com.hazelcast.examples.HazelcastService;
 import com.hazelcast.examples.Tutorial;
 import com.hazelcast.examples.model.Crime;
 import com.hazelcast.examples.model.CrimeCategory;
 import com.hazelcast.examples.model.Person;
-import com.hazelcast.examples.tutorials.impl.CrimeMapper;
-import com.hazelcast.examples.tutorials.impl.CrimeReducerFactory;
-import com.hazelcast.examples.tutorials.impl.SalaryCollator;
-import com.hazelcast.examples.tutorials.impl.SalaryCombinerFactory;
-import com.hazelcast.examples.tutorials.impl.SalaryMapper;
-import com.hazelcast.examples.tutorials.impl.SalaryReducerFactory;
-import com.hazelcast.examples.tutorials.impl.ToStringPrettyfier;
+import com.hazelcast.examples.tutorials.impl.*;
 import com.hazelcast.mapreduce.Job;
 import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
+import com.vaadin.addon.charts.Chart;
+import com.vaadin.addon.charts.model.ChartType;
+import com.vaadin.addon.charts.model.ListSeries;
+import com.vaadin.addon.charts.model.style.SolidColor;
+import com.vaadin.cdi.CDIView;
+import com.vaadin.ui.Component;
 
+import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
 
-public class Tutorial5
-        implements Tutorial {
+@CDIView
+public class Tutorial5 extends Tutorial {
+
+    HazelcastInstance hazelcastInstance;
+
+    @Inject
+    public void setService(HazelcastService service) {
+        hazelcastInstance = service.getHazelcastInstance();
+    }
 
     @Override
-    public void execute(HazelcastInstance hazelcastInstance)
-            throws Exception {
-
+    public Component execute() throws Exception {
         JobTracker jobTracker = hazelcastInstance.getJobTracker("default");
 
         IList<Person> list = hazelcastInstance.getList("persons");
@@ -70,7 +77,25 @@ public class Tutorial5
                 crimeJob.mapper(new CrimeMapper(topSalary.getKey())) //
                         .reducer(new CrimeReducerFactory()) //
                         .submit();
+        Map<CrimeCategory, Integer> result = crimeFuture.get();
+        return wrapAsBarChart(result);
+    }
+    
+    public Chart wrapAsBarChart(Map<CrimeCategory, Integer> result) {
+        Chart chart = new Chart(ChartType.BAR);
+        chart.getConfiguration().getChart().setBackgroundColor(new SolidColor(0,0,0,0));
+        chart.getConfiguration().setTitle("");
+        chart.getConfiguration().getyAxis().setTitle("Crimes per year");
+        chart.getConfiguration().getxAxis().getLabels().setEnabled(false);
+        for (Map.Entry<CrimeCategory, Integer> entry : result.entrySet()) {
+            chart.getConfiguration().addSeries(
+                    new ListSeries(entry.getKey().toString(), entry.getValue()));
+        }
+        return chart;
+    }
 
-        System.out.println(ToStringPrettyfier.toString(crimeFuture.get()));
+    @Override
+    public String getShortDescription() {
+        return "Crimes in the best earning state? TODO Should we create a UI to choose the state from a list ordered by salaries?";
     }
 }

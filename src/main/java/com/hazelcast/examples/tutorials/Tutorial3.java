@@ -13,46 +13,96 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hazelcast.examples.tutorials;
 
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.ICompletableFuture;
 import com.hazelcast.core.IList;
+import com.hazelcast.examples.HazelcastService;
 import com.hazelcast.examples.Tutorial;
 import com.hazelcast.examples.model.Person;
 import com.hazelcast.examples.tutorials.impl.CountCombinerFactory;
 import com.hazelcast.examples.tutorials.impl.CountReducerFactory;
 import com.hazelcast.examples.tutorials.impl.StateBasedCountMapper;
-import com.hazelcast.examples.tutorials.impl.ToStringPrettyfier;
-import com.hazelcast.mapreduce.Job;
+import com.hazelcast.mapreduce.JobCompletableFuture;
 import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
+import com.vaadin.addon.charts.Chart;
+import com.vaadin.addon.charts.model.ChartType;
+import com.vaadin.addon.charts.model.ListSeries;
+import com.vaadin.addon.charts.model.style.SolidColor;
+import com.vaadin.cdi.CDIView;
+import com.vaadin.ui.Component;
+import org.vaadin.viritin.layouts.MVerticalLayout;
 
-public class Tutorial3
-        implements Tutorial {
+import javax.inject.Inject;
+import java.util.Map;
+
+@CDIView
+public class Tutorial3 extends Tutorial {
+
+    HazelcastInstance hazelcastInstance;
+
+    @Inject
+    public void setService(HazelcastService service) {
+        hazelcastInstance = service.getHazelcastInstance();
+    }
 
     @Override
-    public void execute(HazelcastInstance hazelcastInstance)
-            throws Exception {
-
+    public Component execute() throws Exception {
         JobTracker jobTracker = hazelcastInstance.getJobTracker("default");
 
         IList<Person> list = hazelcastInstance.getList("persons");
         KeyValueSource<String, Person> source = KeyValueSource.fromList(list);
 
-        Job<String, Person> job = jobTracker.newJob(source);
-
         // Collect all people by state
-        ICompletableFuture future = job.mapper(new StateBasedCountMapper()).submit();
-
+//        JobCompletableFuture<Map<String, List<Integer>>> future
+//                = jobTracker.newJob(source).mapper(new StateBasedCountMapper()).
+//                submit();
+//        return ToStringPrettyfier.toLabel(future.get());
         // Count people by state
-        // ICompletableFuture future = job.mapper(new StateBasedCountMapper()).reducer(new CountReducerFactory()).submit();
+        JobCompletableFuture<Map<String, Integer>> countByState
+                = jobTracker.newJob(source).mapper(new StateBasedCountMapper()).
+                reducer(
+                        new CountReducerFactory()).submit();
 
         // Same as above but with precalculation per node
-        // ICompletableFuture future = job.mapper(new StateBasedCountMapper()).combiner(new CountCombinerFactory())
-        //                                .reducer(new CountReducerFactory()).submit();
+        JobCompletableFuture<Map<String, Integer>> countByStateWithPrecalculatio
+                = jobTracker.newJob(source).mapper(new StateBasedCountMapper()).
+                combiner(
+                        new CountCombinerFactory())
+                .reducer(new CountReducerFactory()).submit();
 
-        System.out.println(ToStringPrettyfier.toString(future.get()));
+        return visualizeResults(countByState.get(),
+                countByStateWithPrecalculatio.get());
+    }
+
+    private Component visualizeResults(
+            Map<String, Integer> countByState,
+            Map<String, Integer> withPrecalculation) {
+        Chart chart = wrapAsBarChart(countByState);
+        chart.setCaption("Count by State");
+        Chart chartWithPrecalculation = wrapAsBarChart(withPrecalculation);
+        chartWithPrecalculation.setCaption("With precalculation");
+        return new MVerticalLayout(chart, chartWithPrecalculation);
+    }
+
+    public Chart wrapAsBarChart(Map<String, Integer> result) {
+        Chart chart = new Chart(ChartType.COLUMN);
+        chart.getConfiguration().getChart().setBackgroundColor(new SolidColor(0,
+                0, 0, 0));
+        chart.getConfiguration().setTitle("");
+        chart.getConfiguration().getyAxis().setTitle("Persons per state");
+        chart.getConfiguration().getxAxis().getLabels().setEnabled(false);
+        result.entrySet().stream().
+                forEach((entry) -> {
+                    chart.getConfiguration().addSeries(
+                            new ListSeries(entry.getKey(), entry.getValue()));
+        });
+        return chart;
+    }
+
+    @Override
+    public String getShortDescription() {
+        return "Count people by state";
     }
 }

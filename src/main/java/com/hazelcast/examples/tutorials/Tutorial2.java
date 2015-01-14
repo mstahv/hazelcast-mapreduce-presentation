@@ -13,40 +13,74 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hazelcast.examples.tutorials;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.ICompletableFuture;
 import com.hazelcast.core.IList;
+import com.hazelcast.examples.HazelcastService;
 import com.hazelcast.examples.Tutorial;
 import com.hazelcast.examples.model.Person;
+import com.hazelcast.examples.model.State;
 import com.hazelcast.examples.tutorials.impl.StateBasedMapper;
-import com.hazelcast.examples.tutorials.impl.ToStringPrettyfier;
+import com.hazelcast.examples.tutorials.impl.Utils;
 import com.hazelcast.mapreduce.Job;
+import com.hazelcast.mapreduce.JobCompletableFuture;
 import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
+import com.vaadin.cdi.CDIView;
+import com.vaadin.ui.Component;
+import org.vaadin.viritin.fields.TypedSelect;
 
-public class Tutorial2
-        implements Tutorial {
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import java.util.List;
+import java.util.Map;
+
+@CDIView
+public class Tutorial2 extends Tutorial {
+
+    @Inject
+    HazelcastService s;
+
+    private TypedSelect<State> stateSelect;
 
     @Override
-    public void execute(HazelcastInstance hazelcastInstance)
-            throws Exception {
+    public Component execute() throws Exception {
+        JobTracker jobTracker = s.getHazelcastInstance().
+                getJobTracker("default");
 
-        JobTracker jobTracker = hazelcastInstance.getJobTracker("default");
-
-        IList<Person> list = hazelcastInstance.getList("persons");
+        IList<Person> list = s.getHazelcastInstance().getList("persons");
         KeyValueSource<String, Person> source = KeyValueSource.fromList(list);
 
         Job<String, Person> job = jobTracker.newJob(source);
 
         // Find all people grouped by state
         // ICompletableFuture future = job.mapper(new StateBasedMapper()).submit();
-
         // Find all people for the given state
-        ICompletableFuture future = job.mapper(new StateBasedMapper("CA")).submit();
+        JobCompletableFuture<Map<String, List<Person>>> future
+                = job.mapper(new StateBasedMapper(getSelectedState())).submit();
 
-        System.out.println(ToStringPrettyfier.toString(future.get()));
+        List<Person> resultList = future.get().get(getSelectedState());
+        return Utils.listInTable(resultList)
+                .withProperties("firstName", "lastName", "state");
+    }
+
+    @PostConstruct
+    void init() {
+        final List<State> states = s.getStates();
+        stateSelect = new TypedSelect<>(State.class)
+                .setNullSelectionAllowed(false)
+                .setCaptionGenerator(State::getName)
+                .setOptions(states);
+        stateSelect.selectFirst();
+        getControls().addComponentAsFirst(stateSelect);
+    }
+
+    private String getSelectedState() {
+        return stateSelect.getValue().getAbbreviation();
+    }
+
+    @Override
+    public String getShortDescription() {
+        return "Finds all people grouped by state and then filter them for only specific state.";
     }
 }

@@ -13,34 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hazelcast.examples.tutorials;
 
-import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
+import com.hazelcast.examples.HazelcastService;
 import com.hazelcast.examples.Tutorial;
 import com.hazelcast.examples.model.SalaryYear;
 import com.hazelcast.examples.tutorials.impl.SalarySumCombinerFactory;
 import com.hazelcast.examples.tutorials.impl.SalarySumMapper;
 import com.hazelcast.examples.tutorials.impl.SalarySumReducerFactory;
-import com.hazelcast.mapreduce.Collator;
-import com.hazelcast.mapreduce.Job;
-import com.hazelcast.mapreduce.JobCompletableFuture;
-import com.hazelcast.mapreduce.JobTracker;
-import com.hazelcast.mapreduce.KeyValueSource;
+import com.hazelcast.mapreduce.*;
+import com.vaadin.cdi.CDIView;
+import com.vaadin.ui.Component;
+import org.vaadin.viritin.label.Header;
 
+import javax.inject.Inject;
 import java.util.Map;
 
-public class Tutorial6
-        implements Tutorial {
+@CDIView
+public class Tutorial6 extends Tutorial {
+
+    @Inject
+    HazelcastService s;
 
     @Override
-    public void execute(HazelcastInstance hazelcastInstance)
-            throws Exception {
+    public Component execute() throws Exception {
+        JobTracker jobTracker = s.getHazelcastInstance().getJobTracker("default");
 
-        JobTracker jobTracker = hazelcastInstance.getJobTracker("default");
-
-        IMap<String, SalaryYear> map = hazelcastInstance.getMap("salaries");
+        IMap<String, SalaryYear> map = s.getHazelcastInstance().getMap("salaries");
         KeyValueSource<String, SalaryYear> source = KeyValueSource.fromMap(map);
 
         Job<String, SalaryYear> job = jobTracker.newJob(source);
@@ -51,7 +51,12 @@ public class Tutorial6
                 .reducer(new SalarySumReducerFactory()) //
                 .submit(new SalarySumCollator());
 
-        System.out.println("Salary sum: " + future.get());
+        return new Header(future.get().toString());
+    }
+
+    @Override
+    public String getShortDescription() {
+        return "Salary sum";
     }
 
     private static class SalarySumCollator

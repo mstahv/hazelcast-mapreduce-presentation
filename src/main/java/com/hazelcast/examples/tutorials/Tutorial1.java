@@ -13,37 +13,60 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.hazelcast.examples.tutorials;
 
-import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ICompletableFuture;
 import com.hazelcast.core.IList;
+import com.hazelcast.examples.HazelcastService;
 import com.hazelcast.examples.Tutorial;
 import com.hazelcast.examples.model.Person;
+import com.hazelcast.examples.model.State;
 import com.hazelcast.examples.tutorials.impl.PersonMapper;
-import com.hazelcast.examples.tutorials.impl.ToStringPrettyfier;
+import com.hazelcast.examples.tutorials.impl.Utils;
 import com.hazelcast.mapreduce.Job;
 import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
+import com.vaadin.cdi.CDIView;
+import com.vaadin.ui.Component;
+import org.vaadin.viritin.fields.TypedSelect;
 
-public class Tutorial1
-        implements Tutorial {
+import javax.inject.Inject;
+import java.util.List;
+import java.util.Map;
+
+@CDIView
+public class Tutorial1 extends Tutorial {
+
+    @Inject
+    HazelcastService s;
+    private TypedSelect<State> stateSelect;
 
     @Override
-    public void execute(HazelcastInstance hazelcastInstance)
-            throws Exception {
+    public Component execute() {
+        JobTracker jobTracker = s.getHazelcastInstance().
+                getJobTracker("default");
 
-        JobTracker jobTracker = hazelcastInstance.getJobTracker("default");
-
-        IList<Person> list = hazelcastInstance.getList("persons");
+        IList<Person> list = s.getHazelcastInstance().getList("persons");
         KeyValueSource<String, Person> source = KeyValueSource.fromList(list);
 
         Job<String, Person> job = jobTracker.newJob(source);
 
         // Find all people named James
-        ICompletableFuture future = job.mapper(new PersonMapper("James")).submit();
+        ICompletableFuture<Map<String, List<Person>>> future = job.mapper(
+                new PersonMapper("James")).submit();
 
-        System.out.println(ToStringPrettyfier.toString(future.get()));
+        try {
+            Map<String, List<Person>> stringListMap = future.get();
+            List<Person> persons = stringListMap.entrySet().iterator().next().
+                    getValue();
+            return Utils.listInTable(persons);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public String getShortDescription() {
+        return "A very simple example finding all persons with firstName 'James'.";
     }
 }
