@@ -45,12 +45,6 @@
             <artifactId>vaadin-charts</artifactId>
             <version>2.0.0</version>
         </dependency>
-        <dependency>
-            <groupId>in.virit.vwscdn</groupId>
-            <artifactId>vwscdn-client</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-
     </dependencies>
 
     <build>
@@ -81,10 +75,9 @@
             <plugin>
                 <groupId>in.virit.vwscdn</groupId>
                 <artifactId>vwscdn-maven-plugin</artifactId>
-                <version>1.0.0</version>
+                <version>1.1.5</version>
                 <executions>
                     <execution>
-                        <phase>generate-sources</phase>
                         <goals>
                             <goal>generate</goal>
                         </goals>
@@ -96,7 +89,7 @@
 
     <pluginRepositories>
         <pluginRepository>
-            <!-- Repository for viritin wscdn -->
+            <!-- Repository for viritin wscdn maven plugin -->
             <id>viritin</id>
             <url>http://virit.in/maven2</url>
         </pluginRepository>
