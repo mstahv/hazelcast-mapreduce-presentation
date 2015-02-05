@@ -15,6 +15,7 @@
  */
 package com.hazelcast.examples.tutorials;
 
+import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IList;
 import com.hazelcast.examples.HazelcastService;
 import com.hazelcast.examples.Tutorial;
@@ -36,41 +37,40 @@ import java.util.List;
 import java.util.Map;
 
 @CDIView
-public class Tutorial2 extends Tutorial {
+public class Tutorial2
+        extends Tutorial {
 
     @Inject
-    HazelcastService s;
+    private HazelcastService service;
 
     private TypedSelect<State> stateSelect;
 
     @Override
-    public Component execute() throws Exception {
-        JobTracker jobTracker = s.getHazelcastInstance().
-                getJobTracker("default");
+    public Component execute()
+            throws Exception {
 
-        IList<Person> list = s.getHazelcastInstance().getList("persons");
+        HazelcastInstance hazelcastInstance = service.getHazelcastInstance();
+
+        JobTracker jobTracker = hazelcastInstance.getJobTracker("default");
+
+        IList<Person> list = hazelcastInstance.getList("persons");
+
         KeyValueSource<String, Person> source = KeyValueSource.fromList(list);
 
         Job<String, Person> job = jobTracker.newJob(source);
 
         // Find all people grouped by state
-        // ICompletableFuture future = job.mapper(new StateBasedMapper()).submit();
-        // Find all people for the given state
-        JobCompletableFuture<Map<String, List<Person>>> future
-                = job.mapper(new StateBasedMapper(getSelectedState())).submit();
+        JobCompletableFuture<Map<String, List<Person>>> future = job.mapper(new StateBasedMapper(getSelectedState())).submit();
 
         List<Person> resultList = future.get().get(getSelectedState());
-        return Utils.listInTable(resultList)
-                .withProperties("firstName", "lastName", "state");
+        return Utils.listInTable(resultList).withProperties("firstName", "lastName", "state");
     }
 
     @PostConstruct
     void init() {
-        final List<State> states = s.getStates();
-        stateSelect = new TypedSelect<>(State.class)
-                .setNullSelectionAllowed(false)
-                .setCaptionGenerator(State::getName)
-                .setOptions(states);
+        final List<State> states = service.getStates();
+        stateSelect = new TypedSelect<>(State.class).setNullSelectionAllowed(false).setCaptionGenerator(State::getName)
+                                                    .setOptions(states);
         stateSelect.selectFirst();
         getControls().addComponentAsFirst(stateSelect);
     }

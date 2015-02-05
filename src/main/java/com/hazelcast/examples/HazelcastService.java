@@ -12,6 +12,9 @@ import com.hazelcast.examples.model.State;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.LineNumberReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -28,6 +31,10 @@ import java.util.List;
 @ApplicationScoped
 public class HazelcastService {
 
+    private static final String[] DATA_RESOURCES_TO_LOAD = {"text1.txt", "text2.txt", "text3.txt"};
+
+    private static final String MAP_NAME = "articles";
+
     HazelcastInstance hazelcastInstance;
 
     @PostConstruct
@@ -39,6 +46,7 @@ public class HazelcastService {
         // Read CSV data
         try {
             ReaderHelper.read(hazelcastInstance);
+            fillMapWithData(hazelcastInstance);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -74,10 +82,31 @@ public class HazelcastService {
 
     /**
      * Saves or replaces salary information
+     *
      * @param s the salary data to be stored in the data grid
      */
     public void saveSalary(SalaryYear s) {
         hazelcastInstance.getMap("salaries").put(s.getEmail(), s);
+    }
+
+    private static void fillMapWithData(HazelcastInstance hazelcastInstance)
+            throws Exception {
+
+        IMap<String, String> map = hazelcastInstance.getMap(MAP_NAME);
+        for (String file : DATA_RESOURCES_TO_LOAD) {
+            InputStream is = WordCount.class.getResourceAsStream("/wordcount/" + file);
+            LineNumberReader reader = new LineNumberReader(new InputStreamReader(is));
+
+            StringBuilder sb = new StringBuilder();
+            String line = null;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line).append("\n");
+            }
+            map.put(file, sb.toString());
+
+            is.close();
+            reader.close();
+        }
     }
 
     private static HazelcastInstance buildCluster(int memberCount) {
@@ -85,8 +114,7 @@ public class HazelcastService {
         NetworkConfig networkConfig = config.getNetworkConfig();
         networkConfig.getJoin().getMulticastConfig().setEnabled(false);
         networkConfig.getJoin().getTcpIpConfig().setEnabled(true);
-        networkConfig.getJoin().getTcpIpConfig().setMembers(Arrays.asList(
-                new String[]{"127.0.0.1"}));
+        networkConfig.getJoin().getTcpIpConfig().setMembers(Arrays.asList(new String[]{"127.0.0.1"}));
 
         HazelcastInstance[] hazelcastInstances = new HazelcastInstance[memberCount];
         for (int i = 0; i < memberCount; i++) {

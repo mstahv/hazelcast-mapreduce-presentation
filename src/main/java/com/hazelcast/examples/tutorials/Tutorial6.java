@@ -15,6 +15,7 @@
  */
 package com.hazelcast.examples.tutorials;
 
+import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
 import com.hazelcast.examples.HazelcastService;
 import com.hazelcast.examples.Tutorial;
@@ -22,7 +23,11 @@ import com.hazelcast.examples.model.SalaryYear;
 import com.hazelcast.examples.tutorials.impl.SalarySumCombinerFactory;
 import com.hazelcast.examples.tutorials.impl.SalarySumMapper;
 import com.hazelcast.examples.tutorials.impl.SalarySumReducerFactory;
-import com.hazelcast.mapreduce.*;
+import com.hazelcast.mapreduce.Collator;
+import com.hazelcast.mapreduce.Job;
+import com.hazelcast.mapreduce.JobCompletableFuture;
+import com.hazelcast.mapreduce.JobTracker;
+import com.hazelcast.mapreduce.KeyValueSource;
 import com.vaadin.cdi.CDIView;
 import com.vaadin.ui.Component;
 import org.vaadin.viritin.label.Header;
@@ -31,16 +36,21 @@ import javax.inject.Inject;
 import java.util.Map;
 
 @CDIView
-public class Tutorial6 extends Tutorial {
+public class Tutorial6
+        extends Tutorial {
 
     @Inject
-    HazelcastService s;
+    HazelcastService service;
 
     @Override
-    public Component execute() throws Exception {
-        JobTracker jobTracker = s.getHazelcastInstance().getJobTracker("default");
+    public Component execute()
+            throws Exception {
 
-        IMap<String, SalaryYear> map = s.getHazelcastInstance().getMap("salaries");
+        HazelcastInstance hazelcastInstance = service.getHazelcastInstance();
+
+        JobTracker jobTracker = hazelcastInstance.getJobTracker("default");
+
+        IMap<String, SalaryYear> map = hazelcastInstance.getMap("salaries");
         KeyValueSource<String, SalaryYear> source = KeyValueSource.fromMap(map);
 
         Job<String, SalaryYear> job = jobTracker.newJob(source);

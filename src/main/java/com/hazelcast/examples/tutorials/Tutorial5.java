@@ -24,7 +24,12 @@ import com.hazelcast.examples.Tutorial;
 import com.hazelcast.examples.model.Crime;
 import com.hazelcast.examples.model.CrimeCategory;
 import com.hazelcast.examples.model.Person;
-import com.hazelcast.examples.tutorials.impl.*;
+import com.hazelcast.examples.tutorials.impl.CrimeMapper;
+import com.hazelcast.examples.tutorials.impl.CrimeReducerFactory;
+import com.hazelcast.examples.tutorials.impl.SalaryCollator;
+import com.hazelcast.examples.tutorials.impl.SalaryCombinerFactory;
+import com.hazelcast.examples.tutorials.impl.SalaryMapper;
+import com.hazelcast.examples.tutorials.impl.SalaryReducerFactory;
 import com.hazelcast.mapreduce.Job;
 import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
@@ -40,17 +45,18 @@ import java.util.List;
 import java.util.Map;
 
 @CDIView
-public class Tutorial5 extends Tutorial {
-
-    HazelcastInstance hazelcastInstance;
+public class Tutorial5
+        extends Tutorial {
 
     @Inject
-    public void setService(HazelcastService service) {
-        hazelcastInstance = service.getHazelcastInstance();
-    }
+    private HazelcastService service;
 
     @Override
-    public Component execute() throws Exception {
+    public Component execute()
+            throws Exception {
+
+        HazelcastInstance hazelcastInstance = service.getHazelcastInstance();
+
         JobTracker jobTracker = hazelcastInstance.getJobTracker("default");
 
         IList<Person> list = hazelcastInstance.getList("persons");
@@ -77,19 +83,19 @@ public class Tutorial5 extends Tutorial {
                 crimeJob.mapper(new CrimeMapper(topSalary.getKey())) //
                         .reducer(new CrimeReducerFactory()) //
                         .submit();
+
         Map<CrimeCategory, Integer> result = crimeFuture.get();
         return wrapAsBarChart(result);
     }
-    
+
     public Chart wrapAsBarChart(Map<CrimeCategory, Integer> result) {
         Chart chart = new Chart(ChartType.BAR);
-        chart.getConfiguration().getChart().setBackgroundColor(new SolidColor(0,0,0,0));
+        chart.getConfiguration().getChart().setBackgroundColor(new SolidColor(0, 0, 0, 0));
         chart.getConfiguration().setTitle("");
         chart.getConfiguration().getyAxis().setTitle("Crimes per year");
         chart.getConfiguration().getxAxis().getLabels().setEnabled(false);
         for (Map.Entry<CrimeCategory, Integer> entry : result.entrySet()) {
-            chart.getConfiguration().addSeries(
-                    new ListSeries(entry.getKey().toString(), entry.getValue()));
+            chart.getConfiguration().addSeries(new ListSeries(entry.getKey().toString(), entry.getValue()));
         }
         return chart;
     }

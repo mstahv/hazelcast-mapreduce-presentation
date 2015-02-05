@@ -38,47 +38,40 @@ import javax.inject.Inject;
 import java.util.Map;
 
 @CDIView
-public class Tutorial3 extends Tutorial {
-
-    HazelcastInstance hazelcastInstance;
+public class Tutorial3
+        extends Tutorial {
 
     @Inject
-    public void setService(HazelcastService service) {
-        hazelcastInstance = service.getHazelcastInstance();
-    }
+    private HazelcastService service;
 
     @Override
-    public Component execute() throws Exception {
+    public Component execute()
+            throws Exception {
+
+        HazelcastInstance hazelcastInstance = service.getHazelcastInstance();
+
         JobTracker jobTracker = hazelcastInstance.getJobTracker("default");
 
         IList<Person> list = hazelcastInstance.getList("persons");
         KeyValueSource<String, Person> source = KeyValueSource.fromList(list);
 
-        // Collect all people by state
-//        JobCompletableFuture<Map<String, List<Integer>>> future
-//                = jobTracker.newJob(source).mapper(new StateBasedCountMapper()).
-//                submit();
-//        return ToStringPrettyfier.toLabel(future.get());
         // Count people by state
-        JobCompletableFuture<Map<String, Integer>> countByState
-                = jobTracker.newJob(source).mapper(new StateBasedCountMapper()).
-                reducer(
-                        new CountReducerFactory()).submit();
+        JobCompletableFuture<Map<String, Integer>> countByState = jobTracker.newJob(source) //
+                .mapper(new StateBasedCountMapper()) //
+                .reducer(new CountReducerFactory())    //
+                .submit();
 
         // Same as above but with precalculation per node
-        JobCompletableFuture<Map<String, Integer>> countByStateWithPrecalculatio
-                = jobTracker.newJob(source).mapper(new StateBasedCountMapper()).
-                combiner(
-                        new CountCombinerFactory())
-                .reducer(new CountReducerFactory()).submit();
+        JobCompletableFuture<Map<String, Integer>> countByStateWithPrecalculation = jobTracker.newJob(source) //
+                .mapper(new StateBasedCountMapper()) //
+                .combiner(new CountCombinerFactory()) //
+                .reducer(new CountReducerFactory()) //
+                .submit();
 
-        return visualizeResults(countByState.get(),
-                countByStateWithPrecalculatio.get());
+        return visualizeResults(countByState.get(), countByStateWithPrecalculation.get());
     }
 
-    private Component visualizeResults(
-            Map<String, Integer> countByState,
-            Map<String, Integer> withPrecalculation) {
+    private Component visualizeResults(Map<String, Integer> countByState, Map<String, Integer> withPrecalculation) {
         Chart chart = wrapAsBarChart(countByState);
         chart.setCaption("Count by State");
         Chart chartWithPrecalculation = wrapAsBarChart(withPrecalculation);
@@ -88,16 +81,14 @@ public class Tutorial3 extends Tutorial {
 
     public Chart wrapAsBarChart(Map<String, Integer> result) {
         Chart chart = new Chart(ChartType.COLUMN);
-        chart.getConfiguration().getChart().setBackgroundColor(new SolidColor(0,
-                0, 0, 0));
+        chart.getConfiguration().getChart().setBackgroundColor(new SolidColor(0, 0, 0, 0));
         chart.getConfiguration().setTitle("");
         chart.getConfiguration().getyAxis().setTitle("Persons per state");
         chart.getConfiguration().getxAxis().getLabels().setEnabled(false);
         result.entrySet().stream().
                 forEach((entry) -> {
-                    chart.getConfiguration().addSeries(
-                            new ListSeries(entry.getKey(), entry.getValue()));
-        });
+                    chart.getConfiguration().addSeries(new ListSeries(entry.getKey(), entry.getValue()));
+                });
         return chart;
     }
 

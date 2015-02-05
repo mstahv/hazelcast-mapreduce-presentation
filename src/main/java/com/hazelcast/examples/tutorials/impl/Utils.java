@@ -21,29 +21,30 @@ import com.google.gson.GsonBuilder;
 import com.hazelcast.examples.model.Person;
 import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Label;
-import java.util.List;
 import org.vaadin.viritin.fields.MTable;
 
+import java.util.List;
+
 public class Utils {
-    
+
     static Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     public static MTable<Person> listInTable(List<Person> persons) {
         return new MTable<>(persons).withFullWidth().withFullHeight().
                 withProperties("firstName", "lastName", "city", "email");
     }
-    
+
     private Utils() {
     }
 
     public static String toString(Object value) {
         return gson.toJson(value);
     }
-    
+
     public static Label toLabel(Object value) {
         Label label = new Label(toString(value));
         label.setContentMode(ContentMode.PREFORMATTED);
         return label;
     }
-    
+
 }

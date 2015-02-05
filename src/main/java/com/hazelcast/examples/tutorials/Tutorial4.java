@@ -36,34 +36,29 @@ import com.vaadin.addon.charts.model.style.SolidColor;
 import com.vaadin.cdi.CDIView;
 import com.vaadin.ui.Component;
 
-import javax.inject.Inject;
 import java.util.Map;
 import java.util.Map.Entry;
 
 @CDIView
-public class Tutorial4 extends Tutorial {
+public class Tutorial4
+        extends Tutorial {
 
-    HazelcastInstance hazelcastInstance;
     private HazelcastService service;
 
-    @Inject
-    public void setService(HazelcastService service) {
-        this.service = service;
-        hazelcastInstance = service.getHazelcastInstance();
-    }
-
     @Override
-    public Component execute() throws Exception {
-        JobTracker jobTracker = hazelcastInstance.getJobTracker(
-                "default");
+    public Component execute()
+            throws Exception {
+
+        HazelcastInstance hazelcastInstance = service.getHazelcastInstance();
+
+        JobTracker jobTracker = hazelcastInstance.getJobTracker("default");
 
         IList<Person> list = hazelcastInstance.getList("persons");
         KeyValueSource<String, Person> source = KeyValueSource.fromList(list);
 
         Job<String, Person> job = jobTracker.newJob(source);
 
-        JobCompletableFuture<Map<String, Integer>> future
-                = job.mapper(new SalaryMapper()) //
+        JobCompletableFuture<Map<String, Integer>> future = job.mapper(new SalaryMapper()) //
                 .combiner(new SalaryCombinerFactory()) //
                 .reducer(new SalaryReducerFactory()) //
                 .submit();
@@ -73,15 +68,14 @@ public class Tutorial4 extends Tutorial {
 
     public Chart wrapAsBarChart(Map<String, Integer> result) {
         Chart chart = new Chart(ChartType.COLUMN);
-        chart.getConfiguration().getChart().setBackgroundColor(new SolidColor(0,
-                0, 0, 0));
+        chart.getConfiguration().getChart().setBackgroundColor(new SolidColor(0, 0, 0, 0));
         chart.getConfiguration().setTitle("");
         chart.getConfiguration().getyAxis().setTitle("Salary per state");
         chart.getConfiguration().getxAxis().setType(AxisType.CATEGORY);
         chart.getConfiguration().getxAxis().getLabels().setEnabled(true);
         chart.getConfiguration().getxAxis().getLabels().setRotation(-45);
         DataSeries ds = new DataSeries();
-        for(Entry<String,Integer> e : result.entrySet()) {
+        for (Entry<String, Integer> e : result.entrySet()) {
             ds.add(new DataSeriesItem(e.getKey(), e.getValue()));
         }
         chart.getConfiguration().addSeries(ds);
