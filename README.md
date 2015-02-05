@@ -7,7 +7,7 @@ Requirements to try out the examples yourself:
  * Java 8
  * Maven (or an IDE with built in Maven)
 
-To start, issue maven command:
+To start, check out the code, optionally import the Maven project to your IDE and issue Maven command:
 
     mvn wildfly:run
 
