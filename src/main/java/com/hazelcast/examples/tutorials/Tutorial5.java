@@ -64,11 +64,11 @@ public class Tutorial5
 
         Job<String, Person> job = jobTracker.newJob(source);
 
-        ICompletableFuture<List<Map.Entry<String, Integer>>> future = //
-                job.mapper(new SalaryMapper()) //
-                        .combiner(new SalaryCombinerFactory()) //
-                        .reducer(new SalaryReducerFactory()) //
-                        .submit(new SalaryCollator());
+        ICompletableFuture<List<Map.Entry<String, Integer>>> future = job //
+                .mapper(new SalaryMapper()) //
+                .combiner(new SalaryCombinerFactory()) //
+                .reducer(new SalaryReducerFactory()) //
+                .submit(new SalaryCollator());
 
         // Intermediate result
         List<Map.Entry<String, Integer>> orderedSalariesByState = future.get();

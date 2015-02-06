@@ -60,7 +60,9 @@ public class Tutorial2
         Job<String, Person> job = jobTracker.newJob(source);
 
         // Find all people grouped by state
-        JobCompletableFuture<Map<String, List<Person>>> future = job.mapper(new StateBasedMapper(getSelectedState())).submit();
+        JobCompletableFuture<Map<String, List<Person>>> future = job //
+                .mapper(new StateBasedMapper(getSelectedState())) //
+                .submit();
 
         List<Person> resultList = future.get().get(getSelectedState());
         return Utils.listInTable(resultList).withProperties("firstName", "lastName", "state");
@@ -69,8 +71,9 @@ public class Tutorial2
     @PostConstruct
     void init() {
         final List<State> states = service.getStates();
-        stateSelect = new TypedSelect<>(State.class).setNullSelectionAllowed(false).setCaptionGenerator(State::getName)
-                                                    .setOptions(states);
+        stateSelect = new TypedSelect<>(State.class) //
+                .setNullSelectionAllowed(false).setCaptionGenerator(State::getName).setOptions(states);
+
         stateSelect.selectFirst();
         getControls().addComponentAsFirst(stateSelect);
     }

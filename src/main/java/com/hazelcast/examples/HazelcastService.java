@@ -94,7 +94,7 @@ public class HazelcastService {
 
         IMap<String, String> map = hazelcastInstance.getMap(MAP_NAME);
         for (String file : DATA_RESOURCES_TO_LOAD) {
-            InputStream is = WordCount.class.getResourceAsStream("/wordcount/" + file);
+            InputStream is = HazelcastService.class.getResourceAsStream("/wordcount/" + file);
             LineNumberReader reader = new LineNumberReader(new InputStreamReader(is));
 
             StringBuilder sb = new StringBuilder();
@@ -124,4 +124,7 @@ public class HazelcastService {
         return hazelcastInstances[0];
     }
 
+    public static String cleanWord(String word) {
+        return word.replaceAll("[^A-Za-z0-9]", "");
+    }
 }

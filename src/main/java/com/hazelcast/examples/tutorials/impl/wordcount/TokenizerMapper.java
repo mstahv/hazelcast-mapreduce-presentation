@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.hazelcast.examples.wordcount;
+package com.hazelcast.examples.tutorials.impl.wordcount;
 
-import com.hazelcast.examples.WordCount;
+import com.hazelcast.examples.HazelcastService;
 import com.hazelcast.mapreduce.Context;
 import com.hazelcast.mapreduce.Mapper;
 
@@ -31,7 +31,7 @@ public class TokenizerMapper
     public void map(String key, String value, Context<String, Integer> context) {
         StringTokenizer tokenizer = new StringTokenizer(value);
         while (tokenizer.hasMoreTokens()) {
-            String word = WordCount.cleanWord(tokenizer.nextToken());
+            String word = HazelcastService.cleanWord(tokenizer.nextToken());
             context.emit(word.toLowerCase(), ONE);
         }
     }

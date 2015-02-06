@@ -58,7 +58,8 @@ public class Tutorial4
 
         Job<String, Person> job = jobTracker.newJob(source);
 
-        JobCompletableFuture<Map<String, Integer>> future = job.mapper(new SalaryMapper()) //
+        JobCompletableFuture<Map<String, Integer>> future = job //
+                .mapper(new SalaryMapper()) //
                 .combiner(new SalaryCombinerFactory()) //
                 .reducer(new SalaryReducerFactory()) //
                 .submit();

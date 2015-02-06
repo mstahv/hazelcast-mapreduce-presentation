@@ -21,9 +21,9 @@ import com.hazelcast.core.ICompletableFuture;
 import com.hazelcast.core.IMap;
 import com.hazelcast.examples.HazelcastService;
 import com.hazelcast.examples.Tutorial;
-import com.hazelcast.examples.wordcount.TokenizerMapper;
-import com.hazelcast.examples.wordcount.WordcountCombinerFactory;
-import com.hazelcast.examples.wordcount.WordcountReducerFactory;
+import com.hazelcast.examples.tutorials.impl.wordcount.TokenizerMapper;
+import com.hazelcast.examples.tutorials.impl.wordcount.WordcountCombinerFactory;
+import com.hazelcast.examples.tutorials.impl.wordcount.WordcountReducerFactory;
 import com.hazelcast.mapreduce.Job;
 import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
@@ -53,24 +53,22 @@ public class Tutorial0
     public Component execute()
             throws Exception {
 
-        HazelcastInstance hazelcastInstance = service.getHazelcastInstance();
+        HazelcastInstance instance = service.getHazelcastInstance();
 
-        JobTracker jobTracker = hazelcastInstance.getJobTracker("wordcount");
+        JobTracker tracker = instance.getJobTracker("default");
 
-        IMap<String, String> articles = hazelcastInstance.getMap("articles");
+        IMap<String, String> map = instance.getMap("articles");
 
-        KeyValueSource<String, String> source = KeyValueSource.fromMap(articles);
+        KeyValueSource<String, String> source = KeyValueSource.fromMap(map);
 
-        Job<String, String> job = jobTracker.newJob(source);
+        Job<String, String> job = tracker.newJob(source);
 
         ICompletableFuture<Map<String, Integer>> future = job //
                 .mapper(new TokenizerMapper()) //
                 .combiner(new WordcountCombinerFactory()) //
                 .reducer(new WordcountReducerFactory()).submit();
 
-        Map<String, Integer> frequencies = future.get();
-
-        return getChart(frequencies);
+        return getChart(future.get());
     }
 
     @Override

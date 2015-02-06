@@ -53,12 +53,14 @@ public class Tutorial1
         Job<String, Person> job = jobTracker.newJob(source);
 
         // Find all people named James
-        ICompletableFuture<Map<String, List<Person>>> future = job.mapper(new PersonMapper("James")).submit();
+        ICompletableFuture<Map<String, List<Person>>> future = job //
+                .mapper(new PersonMapper("James")) //
+                .submit();
 
         try {
             Map<String, List<Person>> stringListMap = future.get();
-            List<Person> persons = stringListMap.entrySet().iterator().next().
-                    getValue();
+            List<Person> persons = stringListMap.entrySet().iterator().next().getValue();
+
             return Utils.listInTable(persons);
         } catch (Exception e) {
             throw new RuntimeException(e);

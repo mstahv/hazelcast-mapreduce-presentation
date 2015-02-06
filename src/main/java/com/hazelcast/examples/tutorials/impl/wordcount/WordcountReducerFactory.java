@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.hazelcast.examples.wordcount;
+package com.hazelcast.examples.tutorials.impl.wordcount;
 
 import com.hazelcast.mapreduce.Reducer;
 import com.hazelcast.mapreduce.ReducerFactory;

@@ -38,7 +38,7 @@ public class SalaryMapper
     private String state;
     private transient HazelcastInstance hazelcastInstance;
 
-    private final Map<String, String> abbrevationMapping = new HashMap<>(50);
+    private final Map<String, String> abbreviationMapping = new HashMap<>(50);
 
     public SalaryMapper() {
     }
@@ -53,9 +53,9 @@ public class SalaryMapper
 
         IMap<Integer, State> states = hazelcastInstance.getMap("states");
         for (State s : states.values()) {
-            String abbrevation = s.getAbbreviation();
+            String abbreviation = s.getAbbreviation();
             String name = s.getName();
-            abbrevationMapping.put(abbrevation, name);
+            abbreviationMapping.put(abbreviation, name);
         }
     }
 
@@ -67,7 +67,7 @@ public class SalaryMapper
             }
         }
 
-        String name = abbrevationMapping.get(value.getState());
+        String name = abbreviationMapping.get(value.getState());
 
         IMap<String, SalaryYear> salariesMap = hazelcastInstance.getMap("salaries");
 
